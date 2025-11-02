@@ -13,64 +13,10 @@ test('Test Case 1', async ({ page }) => {
   if (!testCase) throw new Error('Test case with id 1 not found');
   const { column, title, tags } = testCase!;
 
+  // Verify the presence of the given ticket
   const ticketDiv = await findTicket(page, column, title, tags);
+  // Verify the presence of the given tags
   await findTags(ticketDiv, tags);
-
-
-  // // Target To-Do column
-  // const toDo = page.getByRole('heading', { level: 2, name: column});
-  // // Get sibling div of toDo
-  // const toDoSibling = toDo.locator('xpath=following-sibling::div');
-  // // Get child divs within sibling
-  // const toDoItems = toDoSibling.locator('> div');
-
-  // // Count how many child divs there are
-  // const count = await toDoItems.count();
-  // console.log("Found " + count + " items under column: " + column);
-
-  // // Initialize variables for below iteration
-  // let ticketDiv: Locator | undefined;
-  // let titleFoundFlag = false;
-
-  // // Find the ticket which has the given title by looping through items until found
-  // for (let i = 0; i < count; i++) {
-  //   const h3 = toDoItems.nth(i).locator('h3');
-  //   if (await h3.isVisible()) {
-  //     const text = await h3.textContent();
-  //     if (text?.includes(title)) {
-  //       console.log(`Found "${title}" in h3 at index ${i}:`, text);
-  //       ticketDiv = toDoItems.nth(i);
-  //       titleFoundFlag = true;
-  //       break;
-  //     }
-  //   }
-  // }
-  // expect(titleFoundFlag).toBe(true);
-
-  // // Target the tags div
-  // const tagsDiv = ticketDiv!.locator('> div:has(span)');
-  // // Target the children (span elements) of tagsDiv
-  // const tagsDivChildren = tagsDiv.locator('> span');
-  // // Count how many child spans there are
-  // const numberOfTags = await tagsDivChildren.count();
-  // console.log("Number of tags: " + numberOfTags);
-
-  // // Initialize variables for below iteration
-  // let tagsFound = 0;
-
-  // // Verify the existence of all given tags
-  // for (const tag of tags) {
-  //   const tagLocator = tagsDivChildren.getByText(tag);
-  //   if (!(await tagLocator.isVisible())) {
-  //     console.log(`Could not find tag "${tag}".`);
-  //   } else {
-  //     tagsFound++;
-  //     console.log(`Found tag: ${tag}`);
-  //   }
-  // }
-  // console.log(`Number of tags expected: ${numberOfTags}, number of tags found: ${tagsFound}`);
-  // expect(tagsFound).toBe(numberOfTags);
-
 });
 
 async function findTicket(page: Page, column: string, title: string, tags: string[]) {
