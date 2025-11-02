@@ -1,0 +1,20 @@
+[
+    {
+        "id": 1,
+        "column": "To Do",
+        "title": "Implement user authentication",
+        "tags": ["Feature", "High Priority"]
+    },
+    {
+        "id": 2,
+        "column": "To Do",
+        "title": "Fix navigation bug",
+        "tags": ["Bug"]
+    },
+    {
+        "id": 3,
+        "column": "In Progress",
+        "title": "Design system updates",
+        "tags": ["Design"]
+    }
+]
