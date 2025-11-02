@@ -1,0 +1,35 @@
+# Summary of Changes to tests.spec.ts
+
+This document outlines the key improvements made to the Playwright test script (`tests.spec.ts`). The goal of these changes was to elevate the code from a functional script to a professional, robust, and maintainable test suite, adhering to modern best practices.
+
+### 1. Dynamic Test Generation (DRY Principle)
+
+*   **Previous State:** Each test case was defined in its own repetitive `test(...)` block. This led to significant code duplication, making the script hard to read and maintain. Adding a new test case required copying and pasting a large block of code.
+
+*   **Improvement:** The tests are now generated dynamically by looping through the `testCases` array imported from `test-cases.json`. The test cases are first filtered into two groups (main app vs. mobile app).
+
+*   **Reason:** This approach follows the "Don't Repeat Yourself" (DRY) principle. The code is now dramatically shorter, cleaner, and more maintainable. To add a new test, you only need to add a new entry to the `test-cases.json` file, with no changes needed to the test logic itself.
+
+### 2. Robust and Idiomatic Locators
+
+*   **Previous State:** The `findTicket` function manually retrieved all ticket elements into a list (`colItems.count()`) and then looped through them in JavaScript to find a matching title. This is inefficient and can lead to flaky tests if elements render slowly, as it fights against Playwright's auto-waiting features.
+
+*   **Improvement:** The `findTicket` function was completely refactored to use a single, precise Playwright locator. It now chains locators to find a ticket with a specific title *within* the correct column.
+
+*   **Reason:** This is the idiomatic Playwright approach. It leverages Playwright's powerful auto-waiting mechanism. Instead of a manual loop, we declare what we want (`await expect(ticketLocator).toBeVisible()`), and Playwright handles waiting for the element to appear. This makes the test more reliable, faster, and provides much clearer error messages on timeout.
+
+### 3. Descriptive Test Naming
+
+*   **Previous State:** Tests were named generically (e.g., "Test Case 1", "Test Case 4"). When a test failed, the report was not informative without cross-referencing the JSON file.
+
+*   **Improvement:** Test names are now generated dynamically based on the test data (e.g., `should find "Implement user authentication" in the "To Do" column`).
+
+*   **Reason:** This provides immediate, clear feedback in test reports. A failing test's name now precisely describes what behavior failed, making debugging significantly faster.
+
+### 4. Logical Test Grouping with `test.describe`
+
+*   **Previous State:** All tests were in a flat structure, with the `navMobileApplication(page)` call repeated inside tests 4, 5, and 6.
+
+*   **Improvement:** The tests are now grouped into two logical suites using `test.describe`: "Main Web Application" and "Mobile Application". A `test.beforeEach` hook is used inside the "Mobile Application" suite to handle the navigation step for all tests in that group.
+
+*   **Reason:** This improves the structure and organization of the test file. It also reduces code duplication by sharing common setup logic (`beforeEach`) among a specific group of tests, making the suite easier to understand and manage.

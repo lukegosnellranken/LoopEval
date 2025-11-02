@@ -1,0 +1,41 @@
+# Summary of Refined Changes to tests.spec.ts
+
+This document outlines the refined improvements made to the Playwright test script (`tests.spec.ts`), taking into account feedback to ensure test stability while enhancing code quality. The goal is to achieve a more professional, robust, and maintainable test suite.
+
+### 1. Dynamic Test Generation (DRY Principle)
+
+*   **Previous State:** Test cases were defined in repetitive `test(...)` blocks, leading to code duplication and making maintenance cumbersome.
+
+*   **Improvement:** Tests are now generated dynamically by iterating through the `testCases` array from `test-cases.json`. Test cases are filtered into groups for the main application and mobile application views.
+
+*   **Reason:** This adheres to the "Don't Repeat Yourself" (DRY) principle, significantly reducing boilerplate. New test cases can be added by simply updating `test-cases.json`, without modifying the core test logic.
+
+### 2. Logical Test Grouping with `test.describe`
+
+*   **Previous State:** All tests were in a flat structure, with repeated navigation calls for mobile application tests.
+
+*   **Improvement:** Tests are grouped into `test.describe` blocks for "Main Web Application" and "Mobile Application". A `test.beforeEach` hook within the "Mobile Application" suite handles the navigation step once for all tests in that group.
+
+*   **Reason:** This improves test organization and readability. It centralizes common setup logic, making the test suite easier to understand and manage.
+
+### 3. Robust and Stable Locator Strategy in `findTicket`
+
+*   **Previous State (Original):** The `findTicket` function manually iterated through elements to find a ticket by title, which could be inefficient and prone to flakiness if elements loaded slowly.
+
+*   **Previous State (First Refactor Attempt):** An attempt was made to use a more abstract, Playwright-idiomatic locator (`getByRole('article', { name: title })`). While generally robust, this approach made assumptions about the DOM structure (e.g., the presence of an `article` role) that were not compatible with the application, leading to broken tests.
+
+*   **Current Improvement:** The `findTicket` function has been refactored to use a more precise and stable locator strategy that closely mirrors the *working* logic of the original implementation, but without the manual JavaScript loop. It now: 
+    1.  Locates the column heading (`getByRole('heading')`).
+    2.  Identifies the column's immediate sibling `div` (the container for tickets) using `locator('xpath=following-sibling::div')`.
+    3.  Within that container, it finds a `div` that *has* an `h3` element containing the exact ticket title (`locator('div', { has: page.locator('h3', { hasText: title }) })`).
+    4.  It then uses `await expect(ticketLocator).toBeVisible()` to leverage Playwright's auto-waiting, ensuring the element is present before proceeding.
+
+*   **Reason:** This approach combines the best of both worlds: it removes the inefficient manual loop while retaining the specific, working element identification logic from the original tests. It ensures stability by not making new, untested assumptions about the DOM structure, and it leverages Playwright's auto-waiting for reliability and clearer timeout messages.
+
+### 4. Preserved Console Logging
+
+*   **Previous State:** Console logging was present in the original `findTicket` and `findTags` functions.
+
+*   **Improvement:** All original `console.log` statements have been preserved and integrated into the refactored `findTicket` and `verifyTags` helper functions.
+
+*   **Reason:** This ensures that the debugging output remains available, as requested, to aid in understanding test execution flow and diagnosing issues like timeouts.

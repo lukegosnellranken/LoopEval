@@ -1,142 +1,103 @@
 import { test, expect, Page, Locator } from '@playwright/test';
 import testCases from '../test-cases.json';
 
+/**
+ * -----------------------------------------------------------------------------
+ * CONFIG & SETUP
+ * -----------------------------------------------------------------------------
+ */
+
+// Separate test cases for different application views
+const mainAppTestCases = testCases.filter(tc => tc.id <= 3);
+const mobileAppTestCases = testCases.filter(tc => tc.id > 3);
+
 test.beforeEach(async ({ page }) => {
   // Each test begins on the dashboard page
   await page.goto('https://animated-gingersnap-8cf7f2.netlify.app');
   await expect(page.getByRole('banner').getByText('Main web application')).toBeVisible();
 });
 
-test('Test Case 1', async ({ page }) => {
-  // Find test case with id of 1 from imported JSON, then destructure to initialize and set variables
-  const testCase = testCases.find(tc => tc.id === 1);
-  if (!testCase) throw new Error('Test case with id 1 not found');
-  const { column, title, tags } = testCase!;
+/**
+ * -----------------------------------------------------------------------------
+ * TEST SUITES
+ * -----------------------------------------------------------------------------
+ */
 
-  // Verify the presence of the given ticket
-  const ticketDiv = await findTicket(page, column, title, tags);
-  // Verify the presence of the given tags
-  await findTags(ticketDiv, tags);
+// Test suite for the main web application
+test.describe('Main Web Application', () => {
+  for (const testCase of mainAppTestCases) {
+    test(`should find "${testCase.title}" in the "${testCase.column}" column`, async ({ page }) => {
+      const { column, title, tags } = testCase;
+      const ticketDiv = await findTicket(page, column, title);
+      await findTags(ticketDiv, tags);
+    });
+  }
 });
 
-test('Test Case 2', async ({ page }) => {
-  // Find test case with id of 2 from imported JSON, then destructure to initialize and set variables
-  const testCase = testCases.find(tc => tc.id === 2);
-  if (!testCase) throw new Error('Test case with id 2 not found');
-  const { column, title, tags } = testCase!;
+// Test suite for the mobile application view
+test.describe('Mobile Application', () => {
+  test.beforeEach(async ({ page }) => {
+    // Navigate to the mobile application view before each test in this suite
+    await navMobileApplication(page);
+  });
 
-  // Verify the presence of the given ticket
-  const ticketDiv = await findTicket(page, column, title, tags);
-  // Verify the presence of the given tags
-  await findTags(ticketDiv, tags);
+  for (const testCase of mobileAppTestCases) {
+    test(`should find "${testCase.title}" in the "${testCase.column}" column`, async ({ page }) => {
+      const { column, title, tags } = testCase;
+      const ticketDiv = await findTicket(page, column, title);
+      await findTags(ticketDiv, tags);
+    });
+  }
 });
 
-test('Test Case 3', async ({ page }) => {
-  // Find test case with id of 3 from imported JSON, then destructure to initialize and set variables
-  const testCase = testCases.find(tc => tc.id === 3);
-  if (!testCase) throw new Error('Test case with id 3 not found');
-  const { column, title, tags } = testCase!;
+/**
+ * -----------------------------------------------------------------------------
+ * HELPER FUNCTIONS
+ * -----------------------------------------------------------------------------
+ */
 
-  // Verify the presence of the given ticket
-  const ticketDiv = await findTicket(page, column, title, tags);
-  // Verify the presence of the given tags
-  await findTags(ticketDiv, tags);
-});
-
-test('Test Case 4', async ({ page }) => {
-  // Navigate to Mobile Application
-  await navMobileApplication(page);
-
-  // Find test case with id of 4 from imported JSON, then destructure to initialize and set variables
-  const testCase = testCases.find(tc => tc.id === 4);
-  if (!testCase) throw new Error('Test case with id 4 not found');
-  const { column, title, tags } = testCase!;
-
-  // Verify the presence of the given ticket
-  const ticketDiv = await findTicket(page, column, title, tags);
-  // Verify the presence of the given tags
-  await findTags(ticketDiv, tags);
-});
-
-test('Test Case 5', async ({ page }) => {
-  // Navigate to Mobile Application
-  await navMobileApplication(page);
-
-  // Find test case with id of 5 from imported JSON, then destructure to initialize and set variables
-  const testCase = testCases.find(tc => tc.id === 5);
-  if (!testCase) throw new Error('Test case with id 5 not found');
-  const { column, title, tags } = testCase!;
-
-  // Verify the presence of the given ticket
-  const ticketDiv = await findTicket(page, column, title, tags);
-  // Verify the presence of the given tags
-  await findTags(ticketDiv, tags);
-});
-
-test('Test Case 6', async ({ page }) => {
-  // Navigate to Mobile Application
-  await navMobileApplication(page);
-
-  // Find test case with id of 6 from imported JSON, then destructure to initialize and set variables
-  const testCase = testCases.find(tc => tc.id === 6);
-  if (!testCase) throw new Error('Test case with id 6 not found');
-  const { column, title, tags } = testCase!;
-
-  // Verify the presence of the given ticket
-  const ticketDiv = await findTicket(page, column, title, tags);
-  // Verify the presence of the given tags
-  await findTags(ticketDiv, tags);
-});
-
-// ============================================================================
-// FUNCTIONS ==================================================================
-// ============================================================================
-
+/**
+ * Navigates to the Mobile Application view.
+ * @param page - The Playwright Page object.
+ */
 async function navMobileApplication(page: Page) {
-  const heading = page.locator('h2', { hasText: 'Mobile Application' });
+  const heading = page.getByRole('heading', { name: 'Mobile Application' });
   await expect(heading).toBeVisible();
-  heading.click();
+  await heading.click();
   await expect(page.getByRole('banner').getByText('Native mobile app')).toBeVisible();
 }
 
-async function findTicket(page: Page, column: string, title: string, tags: string[]) {
-  // Target column
-  const col = page.getByRole('heading', { level: 2, name: column});
-  // Get sibling div of col
-  const colSibling = col.locator('xpath=following-sibling::div');
-  // Get child divs within sibling
-  const colItems = colSibling.locator('> div');
+/**
+ * Finds a ticket element based on its column and title using a robust locator
+ * strategy that mirrors the original logic without manual looping.
+ * @param page - The Playwright Page object.
+ * @param column - The name of the column the ticket is in (e.g., "To Do").
+ * @param title - The title of the ticket.
+ * @returns A Playwright Locator for the ticket's container div.
+ */
+async function findTicket(page: Page, column: string, title: string): Promise<Locator> {
+  // Locate the column heading to anchor our search
+  const columnHeading = page.getByRole('heading', { name: column, level: 2 });
 
-  // Count how many child divs there are
-  const count = await colItems.count();
-  console.log("Found " + count + " item(s) under column: " + column);
+  // Get the column's container (the following sibling div)
+  const columnContainer = columnHeading.locator('xpath=following-sibling::div');
+  
+  // Within that container, find the specific ticket by its title.
+  // We assume the title is in an `h3` element.
+  const ticketLocator = columnContainer.locator('div', { has: page.locator('h3', { hasText: title }) });
 
-  // Initialize variables for below iteration
-  let ticketDiv: Locator | undefined;
-  let titleFoundFlag = false;
+  // Let Playwright's auto-waiting handle the assertion.
+  await expect(ticketLocator).toBeVisible();
+  console.log(`Found ticket with title: "${title}" in column: "${column}"`);
 
-  // Find the ticket which has the given title by looping through items until found
-  for (let i = 0; i < count; i++) {
-    const h3 = colItems.nth(i).locator('h3');
-    if (await h3.isVisible()) {
-      const text = await h3.textContent();
-      if (text?.includes(title)) {
-        console.log(`Found ticket with title: "${title}"`);
-        ticketDiv = colItems.nth(i);
-        titleFoundFlag = true;
-        break;
-      }
-    }
-  }
-  expect(titleFoundFlag).toBe(true);
-
-  if (typeof ticketDiv === 'undefined') {
-    throw new Error('ticketDiv undefined');
-  }
-
-  return (ticketDiv);
+  return ticketLocator;
 }
 
+/**
+ * Verifies that all expected tags are visible within a given ticket locator.
+ * @param ticketDiv - The Playwright Locator for the ticket's container.
+ * @param tags - An array of strings representing the tags to find.
+ */
 async function findTags(ticketDiv: Locator, tags: string[]) {
   // Target the tags div
   const tagsDiv = ticketDiv!.locator('> div:has(span)');
