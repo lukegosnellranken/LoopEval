@@ -16,5 +16,23 @@
         "column": "In Progress",
         "title": "Design system updates",
         "tags": ["Design"]
+    },
+    {
+        "id": 4,
+        "column": "To Do",
+        "title": "Push notification system",
+        "tags": ["Feature"]
+    },
+    {
+        "id": 5,
+        "column": "In Progress",
+        "title": "Offline mode",
+        "tags": ["Feature", "High Priority"]
+    },
+    {
+        "id": 6,
+        "column": "Done",
+        "title": "App icon design",
+        "tags": ["Design"]
     }
 ]
